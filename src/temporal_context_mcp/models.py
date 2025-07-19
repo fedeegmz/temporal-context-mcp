@@ -5,7 +5,7 @@ from typing import Any
 from pydantic import BaseModel
 
 
-class ContextType(str, Enum):
+class ContextType(Enum):
     WORK_SCHEDULE = "work_schedule"
     MOOD_PATTERN = "mood_pattern"
     RESPONSE_STYLE = "response_style"
@@ -14,22 +14,22 @@ class ContextType(str, Enum):
 
 
 class TimePattern(BaseModel):
-    """Define patrones de tiempo usando formato cron-like"""
+    """Defines time patterns using cron-like format"""
 
-    # Días de la semana (0=Domingo, 6=Sábado)
+    # Days of the week (0=Sunday, 6=Saturday)
     days_of_week: list[int] | None = None
-    # Horas específicas
+    # Specific hours
     hours: list[int] | None = None
-    # Rango de horas (ej: 9-17 para horario laboral)
+    # Hour range (e.g., 9-17 for work hours)
     hour_range: tuple[int, int] | None = None
-    # Fechas específicas
+    # Specific dates
     specific_dates: list[str] | None = None  # ISO format
-    # Patrón cron personalizado
+    # Custom cron pattern
     cron_pattern: str | None = None
 
 
 class TemporalContext(BaseModel):
-    """Contexto que se aplica en momentos específicos"""
+    """Context that applies at specific times"""
 
     id: str
     name: str
@@ -39,11 +39,11 @@ class TemporalContext(BaseModel):
     active: bool = True
     created_at: datetime
     last_used: datetime | None = None
-    priority: int = 1  # 1=alta, 2=media, 3=baja
+    priority: int = 1  # 1=high, 2=medium, 3=low
 
 
 class ContextResponse(BaseModel):
-    """Respuesta con contexto aplicado"""
+    """Response with applied context"""
 
     current_contexts: list[TemporalContext]
     recommendations: dict[str, Any]

@@ -1,25 +1,25 @@
 """
 Temporal Context MCP Server
 
-Un servidor MCP que proporciona contexto temporal inteligente
-para adaptar respuestas según el momento y las rutinas del usuario.
+A MCP server that provides intelligent temporal context to adapt responses
+according to the user's time and routines.
 """
 
 __version__ = "0.1.0"
-__author__ = "Tu Nombre"
-__description__ = "Servidor MCP para contexto temporal inteligente"
+__author__ = "Federico Gomez"
+__description__ = "MCP server for intelligent temporal context"
 
-from .models import TemporalContext, ContextType, TimePattern, ContextResponse
+from .models import ContextResponse, ContextType, TemporalContext, TimePattern
 from .server import TemporalContextServer
 from .temporal_store import TemporalStore
 from .time_utils import TimeUtils
 
 __all__ = [
-    "TemporalContext",
-    "ContextType",
-    "TimePattern",
     "ContextResponse",
-    "TemporalStore",
-    "TimeUtils",
+    "ContextType",
+    "TemporalContext",
     "TemporalContextServer",
+    "TemporalStore",
+    "TimePattern",
+    "TimeUtils",
 ]

@@ -12,53 +12,53 @@ from mcp.types import (
     Tool,
 )
 
-from .models import TemporalContext, ContextType, TimePattern, ContextResponse
+from .models import ContextResponse, ContextType, TemporalContext, TimePattern
 from .temporal_store import TemporalStore
 from .time_utils import TimeUtils
 
 
 class TemporalContextServer:
-    """Servidor MCP para contexto temporal inteligente"""
+    """MCP server for intelligent temporal context"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.store = TemporalStore()
         self.server = Server("temporal-context-mcp")
         self._setup_tools()
 
-    def _setup_tools(self):
-        """Configura las herramientas disponibles"""
+    def _setup_tools(self) -> None:
+        """Sets up the available tools"""
 
         @self.server.list_tools()
-        async def list_tools() -> ListToolsResult:
+        def list_tools() -> ListToolsResult:
             return ListToolsResult(
                 tools=[
                     Tool(
                         name="get_current_context",
-                        description="Obtiene el contexto temporal actual y recomendaciones",
+                        description="Gets the current temporal context and recommendations",
                         inputSchema={
                             "type": "object",
                             "properties": {
                                 "timezone": {
                                     "type": "string",
-                                    "description": "Zona horaria (opcional, default: local)",
+                                    "description": "Timezone (optional, default: local)",
                                     "default": "local",
-                                }
+                                },
                             },
                         },
                     ),
                     Tool(
                         name="add_temporal_context",
-                        description="Añade un nuevo contexto temporal",
+                        description="Adds a new temporal context",
                         inputSchema={
                             "type": "object",
                             "properties": {
                                 "id": {
                                     "type": "string",
-                                    "description": "ID único del contexto",
+                                    "description": "Unique context ID",
                                 },
                                 "name": {
                                     "type": "string",
-                                    "description": "Nombre descriptivo",
+                                    "description": "Descriptive name",
                                 },
                                 "context_type": {
                                     "type": "string",
@@ -69,7 +69,7 @@ class TemporalContextServer:
                                         "availability",
                                         "focus_time",
                                     ],
-                                    "description": "Tipo de contexto",
+                                    "description": "Context type",
                                 },
                                 "time_pattern": {
                                     "type": "object",
@@ -81,7 +81,7 @@ class TemporalContextServer:
                                                 "minimum": 0,
                                                 "maximum": 6,
                                             },
-                                            "description": "Días de la semana (0=Domingo, 6=Sábado)",
+                                            "description": "Days of the week (0=Sunday, 6=Saturday)",
                                         },
                                         "hour_range": {
                                             "type": "array",
@@ -92,7 +92,7 @@ class TemporalContextServer:
                                             },
                                             "minItems": 2,
                                             "maxItems": 2,
-                                            "description": "Rango de horas [inicio, fin]",
+                                            "description": "Hour range [start, end]",
                                         },
                                         "hours": {
                                             "type": "array",
@@ -101,24 +101,24 @@ class TemporalContextServer:
                                                 "minimum": 0,
                                                 "maximum": 23,
                                             },
-                                            "description": "Horas específicas",
+                                            "description": "Specific hours",
                                         },
                                         "cron_pattern": {
                                             "type": "string",
-                                            "description": "Patrón cron personalizado",
+                                            "description": "Custom cron pattern",
                                         },
                                     },
                                 },
                                 "context_data": {
                                     "type": "object",
-                                    "description": "Datos del contexto (preferencias, configuraciones)",
+                                    "description": "Context data (preferences, settings)",
                                 },
                                 "priority": {
                                     "type": "integer",
                                     "minimum": 1,
                                     "maximum": 3,
                                     "default": 1,
-                                    "description": "Prioridad (1=alta, 3=baja)",
+                                    "description": "Priority (1=high, 3=low)",
                                 },
                             },
                             "required": [
@@ -132,7 +132,7 @@ class TemporalContextServer:
                     ),
                     Tool(
                         name="list_contexts",
-                        description="Lista todos los contextos temporales",
+                        description="Lists all temporal contexts",
                         inputSchema={
                             "type": "object",
                             "properties": {
@@ -145,29 +145,29 @@ class TemporalContextServer:
                                         "availability",
                                         "focus_time",
                                     ],
-                                    "description": "Filtrar por tipo de contexto (opcional)",
+                                    "description": "Filter by context type (optional)",
                                 },
                                 "active_only": {
                                     "type": "boolean",
                                     "default": False,
-                                    "description": "Solo contextos actualmente activos",
+                                    "description": "Only currently active contexts",
                                 },
                             },
                         },
                     ),
                     Tool(
                         name="update_context",
-                        description="Actualiza un contexto temporal existente",
+                        description="Updates an existing temporal context",
                         inputSchema={
                             "type": "object",
                             "properties": {
                                 "context_id": {
                                     "type": "string",
-                                    "description": "ID del contexto a actualizar",
+                                    "description": "ID of the context to update",
                                 },
                                 "updates": {
                                     "type": "object",
-                                    "description": "Campos a actualizar",
+                                    "description": "Fields to update",
                                 },
                             },
                             "required": ["context_id", "updates"],
@@ -175,37 +175,37 @@ class TemporalContextServer:
                     ),
                     Tool(
                         name="delete_context",
-                        description="Elimina un contexto temporal",
+                        description="Deletes a temporal context",
                         inputSchema={
                             "type": "object",
                             "properties": {
                                 "context_id": {
                                     "type": "string",
-                                    "description": "ID del contexto a eliminar",
-                                }
+                                    "description": "ID of the context to delete",
+                                },
                             },
                             "required": ["context_id"],
                         },
                     ),
                     Tool(
                         name="preview_context",
-                        description="Previsualiza qué contextos estarían activos en un momento específico",
+                        description="Previews which contexts would be active at a specific time",
                         inputSchema={
                             "type": "object",
                             "properties": {
                                 "datetime": {
                                     "type": "string",
-                                    "description": "Fecha y hora ISO (opcional, default: ahora)",
+                                    "description": "ISO datetime (optional, default: now)",
                                 },
                                 "timezone": {
                                     "type": "string",
                                     "default": "local",
-                                    "description": "Zona horaria",
+                                    "description": "Timezone",
                                 },
                             },
                         },
                     ),
-                ]
+                ],
             )
 
         @self.server.call_tool()
@@ -213,35 +213,35 @@ class TemporalContextServer:
             try:
                 if request.name == "get_current_context":
                     return await self._get_current_context(request.arguments or {})
-                elif request.name == "add_temporal_context":
+                if request.name == "add_temporal_context":
                     return await self._add_temporal_context(request.arguments or {})
-                elif request.name == "list_contexts":
+                if request.name == "list_contexts":
                     return await self._list_contexts(request.arguments or {})
-                elif request.name == "update_context":
+                if request.name == "update_context":
                     return await self._update_context(request.arguments or {})
-                elif request.name == "delete_context":
+                if request.name == "delete_context":
                     return await self._delete_context(request.arguments or {})
-                elif request.name == "preview_context":
+                if request.name == "preview_context":
                     return await self._preview_context(request.arguments or {})
-                else:
-                    raise ValueError(f"Herramienta desconocida: {request.name}")
+                raise ValueError(f"Unknown tool: {request.name}")
 
             except Exception as e:
                 return CallToolResult(
-                    content=[TextContent(type="text", text=f"Error: {str(e)}")]
+                    content=[TextContent(type="text", text=f"Error: {e!s}")],
                 )
 
     async def _get_current_context(self, args: dict) -> CallToolResult:
-        """Obtiene el contexto temporal actual"""
+        """Gets the current temporal context"""
         timezone = args.get("timezone", "local")
         current_time = TimeUtils.get_current_datetime(timezone)
 
         active_contexts = TimeUtils.get_active_contexts(
-            self.store.contexts, current_time
+            self.store.contexts,
+            current_time,
         )
         recommendations = TimeUtils.get_context_recommendations(active_contexts)
 
-        # Marcar contextos como usados
+        # Mark contexts as used
         for context in active_contexts:
             self.store.mark_context_used(context.id)
 
@@ -251,43 +251,45 @@ class TemporalContextServer:
             timestamp=current_time,
         )
 
-        result_text = f"""🕒 **Contexto Temporal Actual** ({current_time.strftime('%Y-%m-%d %H:%M:%S')})
+        result_text = f"""🕒 **Current Temporal Context** ({current_time.strftime("%Y-%m-%d %H:%M:%S")})
 
-**Contextos Activos:** {len(active_contexts)}
+**Active Contexts:** {len(active_contexts)}
 """
 
         for context in active_contexts:
             pattern_desc = TimeUtils.format_time_pattern_description(
-                context.time_pattern
+                context.time_pattern,
             )
             result_text += f"""
 • **{context.name}** ({context.context_type})
-  - Patrón: {pattern_desc}
-  - Prioridad: {context.priority}
+  - Pattern: {pattern_desc}
+  - Priority: {context.priority}
 """
 
         result_text += f"""
-**Recomendaciones:**
-• Estilo de respuesta: {recommendations['response_style']}
-• Nivel de formalidad: {recommendations['formality_level']}
-• Nivel de detalle: {recommendations['detail_level']}
-• Sensible al tiempo: {recommendations['time_sensitive']}
+**Recommendations:**
+• Response style: {recommendations["response_style"]}
+• Formality level: {recommendations["formality_level"]}
+• Detail level: {recommendations["detail_level"]}
+• Time sensitive: {recommendations["time_sensitive"]}
 """
 
         if recommendations["suggested_tools"]:
-            result_text += f"• Herramientas sugeridas: {', '.join(recommendations['suggested_tools'])}\n"
+            result_text += (
+                f"• Suggested tools: {', '.join(recommendations['suggested_tools'])}\n"
+            )
 
         if recommendations["avoid_topics"]:
             result_text += (
-                f"• Evitar temas: {', '.join(recommendations['avoid_topics'])}\n"
+                f"• Avoid topics: {', '.join(recommendations['avoid_topics'])}\n"
             )
 
         return CallToolResult(content=[TextContent(type="text", text=result_text)])
 
     async def _add_temporal_context(self, args: dict) -> CallToolResult:
-        """Añade un nuevo contexto temporal"""
+        """Adds a new temporal context"""
         try:
-            # Convertir hour_range de lista a tupla si existe
+            # Convert hour_range from list to tuple if it exists
             if "time_pattern" in args and "hour_range" in args["time_pattern"]:
                 hour_range = args["time_pattern"]["hour_range"]
                 if isinstance(hour_range, list) and len(hour_range) == 2:
@@ -313,31 +315,31 @@ class TemporalContextServer:
                     content=[
                         TextContent(
                             type="text",
-                            text=f"✅ Contexto '{context.name}' añadido exitosamente.\nPatrón: {pattern_desc}",
-                        )
-                    ]
+                            text=f"✅ Context '{context.name}' successfully added.\nPattern: {pattern_desc}",
+                        ),
+                    ],
                 )
-            else:
-                return CallToolResult(
-                    content=[
-                        TextContent(
-                            type="text",
-                            text=f"❌ Error: Ya existe un contexto con ID '{args['id']}'",
-                        )
-                    ]
-                )
+            return CallToolResult(
+                content=[
+                    TextContent(
+                        type="text",
+                        text=f"❌ Error: A context with ID '{args['id']}' already exists",
+                    ),
+                ],
+            )
 
         except Exception as e:
             return CallToolResult(
                 content=[
                     TextContent(
-                        type="text", text=f"❌ Error creando contexto: {str(e)}"
-                    )
-                ]
+                        type="text",
+                        text=f"❌ Error creating context: {e!s}",
+                    ),
+                ],
             )
 
     async def _list_contexts(self, args: dict) -> CallToolResult:
-        """Lista contextos temporales"""
+        """Lists temporal contexts"""
         context_type = args.get("context_type")
         active_only = args.get("active_only", False)
 
@@ -350,33 +352,33 @@ class TemporalContextServer:
             current_time = TimeUtils.get_current_datetime()
             contexts = TimeUtils.get_active_contexts(contexts, current_time)
 
-        result_text = f"📋 **Contextos Temporales** ({len(contexts)} encontrados)\n\n"
+        result_text = f"📋 **Temporal Contexts** ({len(contexts)} found)\n\n"
 
         for context in contexts:
-            status = "🟢 Activo" if context.active else "🔴 Inactivo"
+            status = "🟢 Active" if context.active else "🔴 Inactive"
             pattern_desc = TimeUtils.format_time_pattern_description(
-                context.time_pattern
+                context.time_pattern,
             )
             last_used = (
                 context.last_used.strftime("%Y-%m-%d %H:%M")
                 if context.last_used
-                else "Nunca"
+                else "Never"
             )
 
             result_text += f"""**{context.name}** ({context.id})
-• Tipo: {context.context_type}
-• Estado: {status}
-• Patrón: {pattern_desc}
-• Prioridad: {context.priority}
-• Último uso: {last_used}
-• Datos: {len(context.context_data)} configuraciones
+• Type: {context.context_type}
+• Status: {status}
+• Pattern: {pattern_desc}
+• Priority: {context.priority}
+• Last used: {last_used}
+• Data: {len(context.context_data)} settings
 
 """
 
         return CallToolResult(content=[TextContent(type="text", text=result_text)])
 
     async def _update_context(self, args: dict) -> CallToolResult:
-        """Actualiza un contexto temporal"""
+        """Updates a temporal context"""
         context_id = args["context_id"]
         updates = args["updates"]
 
@@ -387,34 +389,33 @@ class TemporalContextServer:
                 content=[
                     TextContent(
                         type="text",
-                        text=f"✅ Contexto '{context_id}' actualizado exitosamente.",
-                    )
-                ]
+                        text=f"✅ Context '{context_id}' successfully updated.",
+                    ),
+                ],
             )
-        else:
-            return CallToolResult(
-                content=[
-                    TextContent(
-                        type="text",
-                        text=f"❌ Error: No se encontró el contexto '{context_id}'",
-                    )
-                ]
-            )
+        return CallToolResult(
+            content=[
+                TextContent(
+                    type="text",
+                    text=f"❌ Error: Context '{context_id}' not found",
+                ),
+            ],
+        )
 
     async def _delete_context(self, args: dict) -> CallToolResult:
-        """Elimina un contexto temporal"""
+        """Deletes a temporal context"""
         context_id = args["context_id"]
 
-        # Verificar que existe antes de eliminar
+        # Verify that the context exists before deleting
         context = self.store.get_context(context_id)
         if not context:
             return CallToolResult(
                 content=[
                     TextContent(
                         type="text",
-                        text=f"❌ Error: No se encontró el contexto '{context_id}'",
-                    )
-                ]
+                        text=f"❌ Error: Context '{context_id}' not found",
+                    ),
+                ],
             )
 
         success = self.store.delete_context(context_id)
@@ -424,21 +425,21 @@ class TemporalContextServer:
                 content=[
                     TextContent(
                         type="text",
-                        text=f"✅ Contexto '{context.name}' ({context_id}) eliminado exitosamente.",
-                    )
-                ]
+                        text=f"✅ Context '{context.name}' ({context_id}) successfully deleted.",
+                    ),
+                ],
             )
-        else:
-            return CallToolResult(
-                content=[
-                    TextContent(
-                        type="text", text=f"❌ Error eliminando contexto '{context_id}'"
-                    )
-                ]
-            )
+        return CallToolResult(
+            content=[
+                TextContent(
+                    type="text",
+                    text=f"❌ Error deleting context '{context_id}'",
+                ),
+            ],
+        )
 
     async def _preview_context(self, args: dict) -> CallToolResult:
-        """Previsualiza contextos activos en un momento específico"""
+        """Previews active contexts at a specific time"""
         timezone = args.get("timezone", "local")
 
         if args.get("datetime"):
@@ -449,61 +450,62 @@ class TemporalContextServer:
                     content=[
                         TextContent(
                             type="text",
-                            text="❌ Error: Formato de fecha/hora inválido. Use ISO format (YYYY-MM-DDTHH:MM:SS)",
-                        )
-                    ]
+                            text="❌ Error: Invalid date/time format. Use ISO format (YYYY-MM-DDTHH:MM:SS)",
+                        ),
+                    ],
                 )
         else:
             target_time = TimeUtils.get_current_datetime(timezone)
 
         active_contexts = TimeUtils.get_active_contexts(
-            self.store.contexts, target_time
+            self.store.contexts,
+            target_time,
         )
         recommendations = TimeUtils.get_context_recommendations(active_contexts)
 
-        result_text = f"""🔮 **Previsualización de Contexto**
-📅 Fecha/Hora: {target_time.strftime('%Y-%m-%d %H:%M:%S')}
-🌍 Zona Horaria: {timezone}
+        result_text = f"""🔮 **Context Preview**
+📅 Date/Time: {target_time.strftime("%Y-%m-%d %H:%M:%S")}
+🌍 Timezone: {timezone}
 
-**Contextos que estarían activos:** {len(active_contexts)}
+**Contexts that would be active:** {len(active_contexts)}
 """
 
         for context in active_contexts:
             pattern_desc = TimeUtils.format_time_pattern_description(
-                context.time_pattern
+                context.time_pattern,
             )
             result_text += f"""
 • **{context.name}** ({context.context_type})
-  - Patrón: {pattern_desc}
-  - Prioridad: {context.priority}
+  - Pattern: {pattern_desc}
+  - Priority: {context.priority}
 """
 
         if not active_contexts:
-            result_text += "\n• No hay contextos activos en este momento"
+            result_text += "\n• No active contexts at this time"
         else:
             result_text += f"""
-**Recomendaciones que se aplicarían:**
-• Estilo: {recommendations['response_style']}
-• Formalidad: {recommendations['formality_level']}
-• Detalle: {recommendations['detail_level']}
-• Urgente: {recommendations['time_sensitive']}
+**Recommendations that would apply:**
+• Style: {recommendations["response_style"]}
+• Formality: {recommendations["formality_level"]}
+• Detail: {recommendations["detail_level"]}
+• Urgent: {recommendations["time_sensitive"]}
 """
 
             if recommendations["suggested_tools"]:
                 result_text += (
-                    f"• Herramientas: {', '.join(recommendations['suggested_tools'])}\n"
+                    f"• Tools: {', '.join(recommendations['suggested_tools'])}\n"
                 )
 
             if recommendations["avoid_topics"]:
                 result_text += (
-                    f"• Evitar: {', '.join(recommendations['avoid_topics'])}\n"
+                    f"• Avoid: {', '.join(recommendations['avoid_topics'])}\n"
                 )
 
         return CallToolResult(content=[TextContent(type="text", text=result_text)])
 
 
-async def main():
-    """Función principal para ejecutar el servidor"""
+async def main() -> None:
+    """Main function to run the server"""
     server_instance = TemporalContextServer()
 
     async with stdio_server() as (read_stream, write_stream):
@@ -514,7 +516,8 @@ async def main():
                 server_name="temporal-context-mcp",
                 server_version="0.1.0",
                 capabilities=server_instance.server.get_capabilities(
-                    notification_options=None, experimental_capabilities=None
+                    notification_options=None,
+                    experimental_capabilities=None,
                 ),
             ),
         )

@@ -3,49 +3,49 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .models import TemporalContext, ContextType, TimePattern
+from .models import ContextType, TemporalContext, TimePattern
 
 
 class TemporalStore:
-    """Manejo de almacenamiento persistente para contextos temporales"""
+    """Management of persistent storage for temporal contexts"""
 
-    def __init__(self, data_dir: str = "data"):
+    def __init__(self, data_dir: str = "data") -> None:
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(exist_ok=True)
         self.contexts_file = self.data_dir / "temporal_contexts.json"
         self.contexts: list[TemporalContext] = []
         self.load_contexts()
 
-    def load_contexts(self):
-        """Carga contextos desde el archivo JSON"""
+    def load_contexts(self) -> None:
+        """Loads contexts from the JSON file"""
         if self.contexts_file.exists():
             try:
-                with open(self.contexts_file, "r", encoding="utf-8") as f:
+                with open(self.contexts_file, encoding="utf-8") as f:
                     data = json.load(f)
                     self.contexts = [
                         TemporalContext.model_validate(context_data)
                         for context_data in data
                     ]
             except Exception as e:
-                print(f"Error cargando contextos: {e}")
+                print(f"Error loading contexts: {e}")
                 self.contexts = []
         else:
-            # Crear contextos de ejemplo
+            # Create example contexts
             self._create_default_contexts()
 
-    def save_contexts(self):
-        """Guarda contextos al archivo JSON"""
+    def save_contexts(self) -> None:
+        """Saves contexts to the JSON file"""
         try:
             data = [context.model_dump(mode="json") for context in self.contexts]
             with open(self.contexts_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False, default=str)
         except Exception as e:
-            print(f"Error guardando contextos: {e}")
+            print(f"Error saving contexts: {e}")
 
     def add_context(self, context: TemporalContext) -> bool:
-        """Añade un nuevo contexto"""
+        """Adds a new context"""
         try:
-            # Verificar que no existe un contexto con el mismo ID
+            # Verify that no context exists with the same ID
             if any(c.id == context.id for c in self.contexts):
                 return False
 
@@ -56,11 +56,11 @@ class TemporalStore:
             return False
 
     def update_context(self, context_id: str, updates: dict[str, Any]) -> bool:
-        """Actualiza un contexto existente"""
+        """Updates an existing context"""
         for i, context in enumerate(self.contexts):
             if context.id == context_id:
                 try:
-                    # Crear una copia actualizada
+                    # Create an updated copy
                     context_dict = context.model_dump()
                     context_dict.update(updates)
                     updated_context = TemporalContext.model_validate(context_dict)
@@ -73,7 +73,7 @@ class TemporalStore:
         return False
 
     def delete_context(self, context_id: str) -> bool:
-        """Elimina un contexto"""
+        """Deletes a context"""
         original_length = len(self.contexts)
         self.contexts = [c for c in self.contexts if c.id != context_id]
 
@@ -83,37 +83,38 @@ class TemporalStore:
         return False
 
     def get_context(self, context_id: str) -> TemporalContext | None:
-        """Obtiene un contexto por ID"""
+        """Gets a context by ID"""
         for context in self.contexts:
             if context.id == context_id:
                 return context
         return None
 
     def list_contexts(
-            self, context_type: ContextType | None = None
+        self,
+        context_type: ContextType | None = None,
     ) -> list[TemporalContext]:
-        """Lista todos los contextos, opcionalmente filtrados por tipo"""
+        """Lists all contexts, optionally filtered by type"""
         if context_type:
             return [c for c in self.contexts if c.context_type == context_type]
         return self.contexts.copy()
 
-    def mark_context_used(self, context_id: str):
-        """Marca un contexto como usado recientemente"""
+    def mark_context_used(self, context_id: str) -> None:
+        """Marks a context as recently used"""
         for context in self.contexts:
             if context.id == context_id:
                 context.last_used = datetime.now()
                 self.save_contexts()
                 break
 
-    def _create_default_contexts(self):
-        """Crea contextos de ejemplo para demostrar funcionalidad"""
+    def _create_default_contexts(self) -> None:
+        """Creates example contexts to demonstrate functionality"""
         default_contexts = [
             TemporalContext(
                 id="work_hours",
-                name="Horario de trabajo",
+                name="Work Schedule",
                 context_type=ContextType.WORK_SCHEDULE,
                 time_pattern=TimePattern(
-                    days_of_week=[1, 2, 3, 4, 5],  # Lun-Vie
+                    days_of_week=[1, 2, 3, 4, 5],  # Mon-Fri
                     hour_range=(9, 17),  # 9AM-5PM
                 ),
                 context_data={
@@ -129,10 +130,11 @@ class TemporalStore:
             ),
             TemporalContext(
                 id="focus_morning",
-                name="Tiempo de concentración matutino",
+                name="Morning Focus Time",
                 context_type=ContextType.FOCUS_TIME,
                 time_pattern=TimePattern(
-                    days_of_week=[1, 2, 3, 4, 5], hour_range=(8, 11)
+                    days_of_week=[1, 2, 3, 4, 5],
+                    hour_range=(8, 11),
                 ),
                 context_data={
                     "preferences": {
@@ -146,9 +148,9 @@ class TemporalStore:
             ),
             TemporalContext(
                 id="weekend_casual",
-                name="Fin de semana relajado",
+                name="Relaxed Weekend",
                 context_type=ContextType.RESPONSE_STYLE,
-                time_pattern=TimePattern(days_of_week=[0, 6]),  # Sáb-Dom
+                time_pattern=TimePattern(days_of_week=[0, 6]),  # Sat-Sun
                 context_data={
                     "preferences": {
                         "response_style": "casual",
