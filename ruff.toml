@@ -69,7 +69,7 @@ fixable = ["ALL"]
 unfixable = []
 
 [lint.per-file-ignores]
-"server.py" = ["E501", "PLR0911", "PLR2004", "F841"]
+"server.py" = ["E501", "PLR0911", "PLR2004", "F841", "PLR0917", "PLR0913", "A002"]
 "time_utils.py" = ["PLR0911", "PLR2004"]
 
 [format]
