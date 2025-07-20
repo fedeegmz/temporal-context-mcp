@@ -1,7 +1,7 @@
 [project]
 name = "temporal-context-mcp"
 version = "0.1.0"
-description = "Add your description here"
+description = "A MCP server that provides intelligent temporal context to adapt responses according to the user's time and routines."
 readme = "README.md"
 authors = [
     { name = "Federico Gomez", email = "gomez00federico@gmail.com" }
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-temporal-context-mcp = "temporal_context_mcp:main"
+temporal-context-mcp = "temporal_context_mcp.server:main"
 
 [build-system]
 requires = ["hatchling"]

@@ -25,7 +25,8 @@ exclude = [
     "node_modules",
     "site-packages",
     "venv",
-    "notebooks",
+    "data",
+    "utils.py",
 ]
 
 line-length = 88

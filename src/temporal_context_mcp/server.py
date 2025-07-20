@@ -3,14 +3,15 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
+from temporal_context_mcp.recommendation_repository import RecommendationRepository
+
+from .context_repository import ContextRepository
 from .models import ContextType, TemporalContext, TimePattern
-from .temporal_store import TemporalStore
 from .time_utils import TimeUtils
 
 mcp = FastMCP("temporal-context-mcp")
 
-# Initialize store
-store = TemporalStore()
+context_repository = ContextRepository()
 
 
 @mcp.tool()
@@ -22,15 +23,14 @@ def get_current_context(timezone: str = "local") -> str:
     """
     current_time = TimeUtils.get_current_datetime(timezone)
 
-    active_contexts = TimeUtils.get_active_contexts(
-        store.contexts,
-        current_time,
+    active_contexts = context_repository.find(actives=True)
+    recommendations = RecommendationRepository.get_context_recommendations(
+        active_contexts,
     )
-    recommendations = TimeUtils.get_context_recommendations(active_contexts)
 
     # Mark contexts as used
     for context in active_contexts:
-        store.mark_context_used(context.id)
+        context_repository.mark_one_as_used(context.id)
 
     result_text = f"""🕒 **Current Temporal Context** ({current_time.strftime("%Y-%m-%d %H:%M:%S")})
 
@@ -68,7 +68,7 @@ def get_current_context(timezone: str = "local") -> str:
 
 @mcp.tool()
 def add_temporal_context(
-    id: str,
+    context_id: str,
     name: str,
     context_type: str,
     time_pattern: dict[str, Any],
@@ -78,7 +78,7 @@ def add_temporal_context(
     """Adds a new temporal context
 
     Args:
-        id: Unique context ID
+        context_id: Unique context ID
         name: Descriptive name
         context_type: Context type (work_schedule, mood_pattern, response_style, availability, focus_time)
         time_pattern: Time pattern configuration
@@ -95,7 +95,7 @@ def add_temporal_context(
         time_pattern_obj = TimePattern(**time_pattern)
 
         context = TemporalContext(
-            id=id,
+            id=context_id,
             name=name,
             context_type=ContextType(context_type),
             time_pattern=time_pattern_obj,
@@ -104,7 +104,7 @@ def add_temporal_context(
             created_at=datetime.now(),
         )
 
-        success = store.add_context(context)
+        success = context_repository.save(context)
 
         if success:
             pattern_desc = TimeUtils.format_time_pattern_description(time_pattern_obj)
@@ -126,14 +126,10 @@ def list_contexts(
         context_type: Filter by context type (optional)
         active_only: Only currently active contexts
     """
-    if context_type:
-        contexts = store.list_contexts(ContextType(context_type))
-    else:
-        contexts = store.list_contexts()
+    contexts = context_repository.find()
 
     if active_only:
-        current_time = TimeUtils.get_current_datetime()
-        contexts = TimeUtils.get_active_contexts(contexts, current_time)
+        contexts = context_repository.find(context_type=context_type, actives=True)
 
     result_text = f"📋 **Temporal Contexts** ({len(contexts)} found)\n\n"
 
@@ -169,7 +165,7 @@ def update_context(context_id: str, updates: dict[str, Any]) -> str:
         context_id: ID of the context to update
         updates: Fields to update
     """
-    success = store.update_context(context_id, updates)
+    success = context_repository.update_one_by_id(context_id, updates)
 
     if success:
         return f"✅ Context '{context_id}' successfully updated."
@@ -184,78 +180,20 @@ def delete_context(context_id: str) -> str:
         context_id: ID of the context to delete
     """
     # Verify that the context exists before deleting
-    context = store.get_context(context_id)
+    context = context_repository.find_one_by_id(context_id)
     if not context:
         return f"❌ Error: Context '{context_id}' not found"
 
-    success = store.delete_context(context_id)
+    success = context_repository.delete_one_by_id(context_id)
 
     if success:
         return f"✅ Context '{context.name}' ({context_id}) successfully deleted."
     return f"❌ Error deleting context '{context_id}'"
 
 
-@mcp.tool()
-def preview_context(
-    datetime_str: str | None = None,
-    timezone: str = "local",
-) -> str:
-    """Previews which contexts would be active at a specific time
-
-    Args:
-        datetime_str: ISO datetime (optional, default: now)
-        timezone: Timezone
-    """
-    if datetime_str:
-        try:
-            target_time = datetime.fromisoformat(datetime_str)
-        except ValueError:
-            return "❌ Error: Invalid date/time format. Use ISO format (YYYY-MM-DDTHH:MM:SS)"
-    else:
-        target_time = TimeUtils.get_current_datetime(timezone)
-
-    active_contexts = TimeUtils.get_active_contexts(
-        store.contexts,
-        target_time,
-    )
-    recommendations = TimeUtils.get_context_recommendations(active_contexts)
-
-    result_text = f"""🔮 **Context Preview**
-📅 Date/Time: {target_time.strftime("%Y-%m-%d %H:%M:%S")}
-🌍 Timezone: {timezone}
-
-**Contexts that would be active:** {len(active_contexts)}
-"""
-
-    for context in active_contexts:
-        pattern_desc = TimeUtils.format_time_pattern_description(
-            context.time_pattern,
-        )
-        result_text += f"""
-• **{context.name}** ({context.context_type})
-  - Pattern: {pattern_desc}
-  - Priority: {context.priority}
-"""
-
-    if not active_contexts:
-        result_text += "\n• No active contexts at this time"
-    else:
-        result_text += f"""
-**Recommendations that would apply:**
-• Style: {recommendations["response_style"]}
-• Formality: {recommendations["formality_level"]}
-• Detail: {recommendations["detail_level"]}
-• Urgent: {recommendations["time_sensitive"]}
-"""
-
-        if recommendations["suggested_tools"]:
-            result_text += f"• Tools: {', '.join(recommendations['suggested_tools'])}\n"
-
-        if recommendations["avoid_topics"]:
-            result_text += f"• Avoid: {', '.join(recommendations['avoid_topics'])}\n"
-
-    return result_text
+def main() -> None:
+    mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    main()

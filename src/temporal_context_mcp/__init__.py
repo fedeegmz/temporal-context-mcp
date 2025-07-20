@@ -9,17 +9,16 @@ __version__ = "0.1.0"
 __author__ = "Federico Gomez"
 __description__ = "MCP server for intelligent temporal context"
 
-from .models import ContextResponse, ContextType, TemporalContext, TimePattern
-from .server import TemporalContextServer
-from .temporal_store import TemporalStore
+from .context_repository import ContextRepository
+from .models import ContextType, TemporalContext, TimePattern
+from .recommendation_repository import RecommendationRepository
 from .time_utils import TimeUtils
 
 __all__ = [
-    "ContextResponse",
+    "ContextRepository",
     "ContextType",
+    "RecommendationRepository",
     "TemporalContext",
-    "TemporalContextServer",
-    "TemporalStore",
     "TimePattern",
     "TimeUtils",
 ]

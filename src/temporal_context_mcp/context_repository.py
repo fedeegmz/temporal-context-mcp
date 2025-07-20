@@ -4,9 +4,11 @@ from pathlib import Path
 from typing import Any
 
 from .models import ContextType, TemporalContext, TimePattern
+from .time_utils import TimeUtils
+from .utils import default_false, matches_time_pattern
 
 
-class TemporalStore:
+class ContextRepository:
     """Management of persistent storage for temporal contexts"""
 
     def __init__(self, data_dir: str = "data") -> None:
@@ -14,9 +16,78 @@ class TemporalStore:
         self.data_dir.mkdir(exist_ok=True)
         self.contexts_file = self.data_dir / "temporal_contexts.json"
         self.contexts: list[TemporalContext] = []
-        self.load_contexts()
+        self.__load_contexts()
 
-    def load_contexts(self) -> None:
+    def find_one_by_id(self, context_id: str) -> TemporalContext | None:
+        """Gets a context by ID"""
+        return next(
+            (context for context in self.contexts if context.id == context_id),
+            None,
+        )
+
+    def find(
+        self,
+        context_type: ContextType | None = None,
+        actives: bool | None = None,
+    ) -> list[TemporalContext]:
+        """Lists all contexts, optionally filtered by type"""
+        contexts = self.contexts.copy()
+        if context_type is not None:
+            contexts = [c for c in contexts if c.context_type == context_type]
+        if actives is not None:
+            current_time = TimeUtils.get_current_datetime()
+            contexts = [
+                context
+                for context in contexts
+                if context.active
+                and matches_time_pattern(context.time_pattern, current_time)
+            ]
+        contexts.sort(key=lambda x: x.priority)
+        return contexts
+
+    @default_false
+    def save(self, context: TemporalContext) -> bool:
+        """Adds a new context"""
+        if any(c.id == context.id for c in self.contexts):
+            return False
+
+        self.contexts.append(context)
+        self.__save_contexts()
+        return True
+
+    @default_false
+    def update_one_by_id(self, context_id: str, updates: dict[str, Any]) -> bool:
+        """Updates an existing context"""
+        for i, context in enumerate(self.contexts):
+            if context.id == context_id:
+                context_dict = context.model_dump()
+                context_dict.update(updates)
+                updated_context = TemporalContext.model_validate(context_dict)
+
+                self.contexts[i] = updated_context
+                self.__save_contexts()
+                return True
+        return False
+
+    def delete_one_by_id(self, context_id: str) -> bool:
+        """Deletes a context"""
+        original_length = len(self.contexts)
+        self.contexts = [c for c in self.contexts if c.id != context_id]
+
+        if len(self.contexts) < original_length:
+            self.__save_contexts()
+            return True
+        return False
+
+    def mark_one_as_used(self, context_id: str) -> None:
+        """Marks a context as recently used"""
+        for context in self.contexts:
+            if context.id == context_id:
+                context.last_used = datetime.now()
+                self.__save_contexts()
+                break
+
+    def __load_contexts(self) -> None:
         """Loads contexts from the JSON file"""
         if self.contexts_file.exists():
             try:
@@ -29,11 +100,11 @@ class TemporalStore:
             except Exception as e:
                 print(f"Error loading contexts: {e}")
                 self.contexts = []
+                self.__save_contexts()
         else:
-            # Create example contexts
             self._create_default_contexts()
 
-    def save_contexts(self) -> None:
+    def __save_contexts(self) -> None:
         """Saves contexts to the JSON file"""
         try:
             data = [context.model_dump(mode="json") for context in self.contexts]
@@ -41,70 +112,6 @@ class TemporalStore:
                 json.dump(data, f, indent=2, ensure_ascii=False, default=str)
         except Exception as e:
             print(f"Error saving contexts: {e}")
-
-    def add_context(self, context: TemporalContext) -> bool:
-        """Adds a new context"""
-        try:
-            # Verify that no context exists with the same ID
-            if any(c.id == context.id for c in self.contexts):
-                return False
-
-            self.contexts.append(context)
-            self.save_contexts()
-            return True
-        except Exception:
-            return False
-
-    def update_context(self, context_id: str, updates: dict[str, Any]) -> bool:
-        """Updates an existing context"""
-        for i, context in enumerate(self.contexts):
-            if context.id == context_id:
-                try:
-                    # Create an updated copy
-                    context_dict = context.model_dump()
-                    context_dict.update(updates)
-                    updated_context = TemporalContext.model_validate(context_dict)
-
-                    self.contexts[i] = updated_context
-                    self.save_contexts()
-                    return True
-                except Exception:
-                    return False
-        return False
-
-    def delete_context(self, context_id: str) -> bool:
-        """Deletes a context"""
-        original_length = len(self.contexts)
-        self.contexts = [c for c in self.contexts if c.id != context_id]
-
-        if len(self.contexts) < original_length:
-            self.save_contexts()
-            return True
-        return False
-
-    def get_context(self, context_id: str) -> TemporalContext | None:
-        """Gets a context by ID"""
-        for context in self.contexts:
-            if context.id == context_id:
-                return context
-        return None
-
-    def list_contexts(
-        self,
-        context_type: ContextType | None = None,
-    ) -> list[TemporalContext]:
-        """Lists all contexts, optionally filtered by type"""
-        if context_type:
-            return [c for c in self.contexts if c.context_type == context_type]
-        return self.contexts.copy()
-
-    def mark_context_used(self, context_id: str) -> None:
-        """Marks a context as recently used"""
-        for context in self.contexts:
-            if context.id == context_id:
-                context.last_used = datetime.now()
-                self.save_contexts()
-                break
 
     def _create_default_contexts(self) -> None:
         """Creates example contexts to demonstrate functionality"""
@@ -165,4 +172,4 @@ class TemporalStore:
         ]
 
         self.contexts = default_contexts
-        self.save_contexts()
+        self.__save_contexts()
