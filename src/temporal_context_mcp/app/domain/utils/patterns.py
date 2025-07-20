@@ -2,18 +2,7 @@ from datetime import datetime
 
 import croniter
 
-from temporal_context_mcp import TimePattern
-
-
-def default_false(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            print(f"Error {e}")
-            return False
-
-    return wrapper
+from temporal_context_mcp.app.domain.time_pattern import TimePattern
 
 
 def matches_time_pattern(pattern: TimePattern, target_time: datetime) -> bool:

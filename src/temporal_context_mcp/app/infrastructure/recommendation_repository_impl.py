@@ -1,8 +1,16 @@
-from temporal_context_mcp import TemporalContext
+from typing import override
+
+from temporal_context_mcp.app.domain.ports.recommendation_repository import (
+    RecommendationRepository,
+)
+from temporal_context_mcp.app.infrastructure.temporal_context_repository_impl import (
+    TemporalContext,
+)
 
 
-class RecommendationRepository:
+class RecommendationRepositoryImpl(RecommendationRepository):
     @staticmethod
+    @override
     def get_context_recommendations(active_contexts: list[TemporalContext]) -> dict:
         """Generates recommendations based on active contexts"""
         recommendations = {

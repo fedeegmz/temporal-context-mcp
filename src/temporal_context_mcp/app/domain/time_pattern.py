@@ -1,16 +1,4 @@
-from datetime import datetime
-from enum import Enum
-from typing import Any
-
 from pydantic import BaseModel, Field
-
-
-class ContextType(Enum):
-    WORK_SCHEDULE = "work_schedule"
-    MOOD_PATTERN = "mood_pattern"
-    RESPONSE_STYLE = "response_style"
-    AVAILABILITY = "availability"
-    FOCUS_TIME = "focus_time"
 
 
 class TimePattern(BaseModel):
@@ -36,17 +24,3 @@ class TimePattern(BaseModel):
         description="Custom cron pattern",
         default=None,
     )
-
-
-class TemporalContext(BaseModel):
-    """Context that applies at specific times"""
-
-    id: str
-    name: str
-    context_type: ContextType
-    time_pattern: TimePattern
-    context_data: dict[str, Any]
-    active: bool = True
-    created_at: datetime
-    last_used: datetime | None = None
-    priority: int = 1  # 1=high, 2=medium, 3=low

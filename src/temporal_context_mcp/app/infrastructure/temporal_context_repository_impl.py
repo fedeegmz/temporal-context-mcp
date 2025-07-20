@@ -1,14 +1,22 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import override
 
-from .models import ContextType, TemporalContext, TimePattern
-from .time_utils import TimeUtils
-from .utils import default_false, matches_time_pattern
+from temporal_context_mcp.app.domain.ports.temporal_context_repository import (
+    TemporalContextRepository,
+)
+from temporal_context_mcp.app.domain.temporal_context import (
+    ContextType,
+    TemporalContext,
+    TimePattern,
+)
+from temporal_context_mcp.app.domain.utils.patterns import matches_time_pattern
+from temporal_context_mcp.shared.domain.utils.datetime_utils import get_current_datetime
+from temporal_context_mcp.shared.domain.utils.decorators import default_false
 
 
-class ContextRepository:
+class TemporalContextRepositoryImpl(TemporalContextRepository):
     """Management of persistent storage for temporal contexts"""
 
     def __init__(self, data_dir: str = "data") -> None:
@@ -18,6 +26,7 @@ class ContextRepository:
         self.contexts: list[TemporalContext] = []
         self.__load_contexts()
 
+    @override
     def find_one_by_id(self, context_id: str) -> TemporalContext | None:
         """Gets a context by ID"""
         return next(
@@ -25,6 +34,7 @@ class ContextRepository:
             None,
         )
 
+    @override
     def find(
         self,
         context_type: ContextType | None = None,
@@ -35,7 +45,7 @@ class ContextRepository:
         if context_type is not None:
             contexts = [c for c in contexts if c.context_type == context_type]
         if actives is not None:
-            current_time = TimeUtils.get_current_datetime()
+            current_time = get_current_datetime()
             contexts = [
                 context
                 for context in contexts
@@ -45,30 +55,23 @@ class ContextRepository:
         contexts.sort(key=lambda x: x.priority)
         return contexts
 
+    @override
     @default_false
     def save(self, context: TemporalContext) -> bool:
         """Adds a new context"""
         if any(c.id == context.id for c in self.contexts):
+            for i, ctx in enumerate(self.contexts):
+                if ctx.id == context.id:
+                    self.contexts[i] = context
+                    self.__save_contexts()
+                    return True
             return False
 
         self.contexts.append(context)
         self.__save_contexts()
         return True
 
-    @default_false
-    def update_one_by_id(self, context_id: str, updates: dict[str, Any]) -> bool:
-        """Updates an existing context"""
-        for i, context in enumerate(self.contexts):
-            if context.id == context_id:
-                context_dict = context.model_dump()
-                context_dict.update(updates)
-                updated_context = TemporalContext.model_validate(context_dict)
-
-                self.contexts[i] = updated_context
-                self.__save_contexts()
-                return True
-        return False
-
+    @override
     def delete_one_by_id(self, context_id: str) -> bool:
         """Deletes a context"""
         original_length = len(self.contexts)
@@ -79,11 +82,12 @@ class ContextRepository:
             return True
         return False
 
+    @override
     def mark_one_as_used(self, context_id: str) -> None:
         """Marks a context as recently used"""
         for context in self.contexts:
             if context.id == context_id:
-                context.last_used = datetime.now()
+                context.last_used = get_current_datetime()
                 self.__save_contexts()
                 break
 
@@ -102,7 +106,7 @@ class ContextRepository:
                 self.contexts = []
                 self.__save_contexts()
         else:
-            self._create_default_contexts()
+            self.__create_default_contexts()
 
     def __save_contexts(self) -> None:
         """Saves contexts to the JSON file"""
@@ -113,7 +117,7 @@ class ContextRepository:
         except Exception as e:
             print(f"Error saving contexts: {e}")
 
-    def _create_default_contexts(self) -> None:
+    def __create_default_contexts(self) -> None:
         """Creates example contexts to demonstrate functionality"""
         default_contexts = [
             TemporalContext(

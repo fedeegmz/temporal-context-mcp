@@ -25,5 +25,12 @@ build-backend = "hatchling.build"
 dev = [
     "black>=25.1.0",
     "pre-commit>=4.2.0",
+    "pytest>=8.4.1",
     "ruff>=0.12.4",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

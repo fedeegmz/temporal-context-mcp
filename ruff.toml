@@ -70,8 +70,11 @@ fixable = ["ALL"]
 unfixable = []
 
 [lint.per-file-ignores]
-"server.py" = ["E501", "PLR0911", "PLR2004", "F841", "PLR0917", "PLR0913", "A002"]
-"time_utils.py" = ["PLR0911", "PLR2004"]
+"**/shared/domain/utils/decorators.py" = ["ANN001", "ANN002", "ANN003", "ANN201", "ANN202"]
+"**/server.py" = ["E501", "PLR0911", "PLR0913", "PLR0917"]
+"**/app/application/save_temporal_context.py" = ["PLR0913"]
+"**/app/infrastructure/controller.py" = ["E501", "PLR0913"]
+"**/app/domain/utils/patterns.py" = ["PLR0911", "PLR2004"]
 
 [format]
 quote-style = "double"
