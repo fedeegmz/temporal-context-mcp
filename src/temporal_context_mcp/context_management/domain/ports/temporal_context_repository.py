@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from temporal_context_mcp.app.domain.context_type import ContextType
-from temporal_context_mcp.app.domain.temporal_context import TemporalContext
+from temporal_context_mcp.context_management import TemporalContext
+from temporal_context_mcp.shared import ContextType
 
 
 class TemporalContextRepository(ABC):

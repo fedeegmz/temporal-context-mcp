@@ -1,8 +1,8 @@
-from temporal_context_mcp.app.domain.context_type import ContextType
-from temporal_context_mcp.app.domain.ports.temporal_context_repository import (
+from temporal_context_mcp.context_management import (
+    TemporalContext,
     TemporalContextRepository,
 )
-from temporal_context_mcp.app.domain.temporal_context import TemporalContext
+from temporal_context_mcp.shared import ContextType
 
 
 class FindTemporalContext:

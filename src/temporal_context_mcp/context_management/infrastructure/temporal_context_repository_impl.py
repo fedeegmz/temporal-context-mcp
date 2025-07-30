@@ -3,17 +3,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import override
 
-from temporal_context_mcp.app.domain.ports.temporal_context_repository import (
+from temporal_context_mcp.context_management import (
+    TemporalContext,
     TemporalContextRepository,
 )
-from temporal_context_mcp.app.domain.temporal_context import (
+from temporal_context_mcp.shared import (
     ContextType,
-    TemporalContext,
     TimePattern,
+    TimePatternUtils,
+    default_false,
+    get_current_datetime,
 )
-from temporal_context_mcp.app.domain.utils.patterns import matches_time_pattern
-from temporal_context_mcp.shared.domain.utils.datetime_utils import get_current_datetime
-from temporal_context_mcp.shared.domain.utils.decorators import default_false
 
 
 class TemporalContextRepositoryImpl(TemporalContextRepository):
@@ -50,7 +50,9 @@ class TemporalContextRepositoryImpl(TemporalContextRepository):
                 context
                 for context in contexts
                 if context.active
-                and matches_time_pattern(context.time_pattern, current_time)
+                and TimePatternUtils(
+                    context.time_pattern,
+                ).is_time_match(current_time)
             ]
         contexts.sort(key=lambda x: x.priority)
         return contexts

@@ -1,6 +1,4 @@
-from temporal_context_mcp.app.domain.ports.temporal_context_repository import (
-    TemporalContextRepository,
-)
+from temporal_context_mcp.context_management import TemporalContextRepository
 
 
 class DeleteTemporalContext:

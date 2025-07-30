@@ -2,11 +2,9 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from temporal_context_mcp.app.domain.ports.temporal_context_repository import (
+from temporal_context_mcp.context_management import (
+    Controller,
     TemporalContextRepository,
-)
-from temporal_context_mcp.app.infrastructure.controller import Controller
-from temporal_context_mcp.app.infrastructure.temporal_context_repository_impl import (
     TemporalContextRepositoryImpl,
 )
 

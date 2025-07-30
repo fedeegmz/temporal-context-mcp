@@ -1,12 +1,15 @@
 from typing import Any
 
-from temporal_context_mcp.app.domain.context_type import ContextType
-from temporal_context_mcp.app.domain.ports.temporal_context_repository import (
+from temporal_context_mcp.context_management import (
+    TemporalContext,
     TemporalContextRepository,
 )
-from temporal_context_mcp.app.domain.temporal_context import TemporalContext
-from temporal_context_mcp.app.domain.time_pattern import TimePattern
-from temporal_context_mcp.shared.domain.utils.datetime_utils import get_current_datetime
+from temporal_context_mcp.shared import (
+    ContextType,
+    Priority,
+    TimePattern,
+    get_current_datetime,
+)
 
 
 class SaveTemporalContext:
@@ -21,7 +24,7 @@ class SaveTemporalContext:
         context_type: str,
         time_pattern: dict[str, Any],
         context_data: dict[str, Any],
-        priority: int = 1,
+        priority: Priority = Priority.LOW,
     ) -> bool:
         temporal_context = TemporalContext(
             id=context_id,

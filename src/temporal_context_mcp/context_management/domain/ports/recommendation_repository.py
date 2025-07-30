@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 
-from temporal_context_mcp.app.infrastructure.temporal_context_repository_impl import (
-    TemporalContext,
-)
+from temporal_context_mcp.context_management import TemporalContext
 
 
 class RecommendationRepository(ABC):

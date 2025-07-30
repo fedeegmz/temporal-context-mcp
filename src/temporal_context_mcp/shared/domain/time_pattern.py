@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 
 
 class TimePattern(BaseModel):
-    """Defines time patterns using cron-like format"""
+    """Defines time patterns using a cron-like format"""
 
     days_of_week: list[int] | None = Field(
         description="Days of the week (0=Sunday, 6=Saturday)",

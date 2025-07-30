@@ -1,31 +1,20 @@
 from typing import Any
 
-from temporal_context_mcp.app.application.delete_temporal_context import (
+from temporal_context_mcp.context_management import (
     DeleteTemporalContext,
-)
-from temporal_context_mcp.app.application.find_temporal_context import (
     FindTemporalContext,
-)
-from temporal_context_mcp.app.application.save_temporal_context import (
-    SaveTemporalContext,
-)
-from temporal_context_mcp.app.domain.ports.recommendation_repository import (
     RecommendationRepository,
-)
-from temporal_context_mcp.app.domain.ports.temporal_context_repository import (
-    TemporalContextRepository,
-)
-from temporal_context_mcp.app.domain.time_pattern import TimePattern
-from temporal_context_mcp.app.domain.utils.formatters import (
-    format_time_pattern_description,
-)
-from temporal_context_mcp.app.infrastructure.recommendation_repository_impl import (
     RecommendationRepositoryImpl,
-)
-from temporal_context_mcp.app.infrastructure.temporal_context_repository_impl import (
+    SaveTemporalContext,
+    TemporalContextRepository,
     TemporalContextRepositoryImpl,
 )
-from temporal_context_mcp.shared.domain.utils.datetime_utils import get_current_datetime
+from temporal_context_mcp.shared import (
+    Priority,
+    TimePattern,
+    TimePatternUtils,
+    get_current_datetime,
+)
 
 
 class Controller:
@@ -41,7 +30,9 @@ class Controller:
         self.delete_temporal_context = DeleteTemporalContext(self.__ctx_repository)
 
     def get_current_context(self, *, timezone: str = "local") -> str:
-        current_time = get_current_datetime(timezone)
+        formated_current_time = get_current_datetime(timezone).strftime(
+            "%Y-%m-%d %H:%M:%S",
+        )
 
         active_contexts = self.find_temporal_context.execute(actives=True)
         recommendations = self.__recommendation_repository.get_context_recommendations(
@@ -51,15 +42,13 @@ class Controller:
         for context in active_contexts:
             self.__ctx_repository.mark_one_as_used(context.id)
 
-        result_text = f"""🕒 **Current Temporal Context** ({current_time.strftime("%Y-%m-%d %H:%M:%S")})
+        result_text = f"""🕒 **Current Temporal Context** ({formated_current_time})
 
         **Active Contexts:** {len(active_contexts)}
         """
 
         for context in active_contexts:
-            pattern_desc = format_time_pattern_description(
-                context.time_pattern,
-            )
+            pattern_desc = TimePatternUtils(context.time_pattern).generate_description()
             result_text += f"""
         • **{context.name}** ({context.context_type})
           - Pattern: {pattern_desc}
@@ -102,11 +91,13 @@ class Controller:
             context_type=context_type,
             time_pattern=time_pattern,
             context_data=context_data,
-            priority=priority,
+            priority=Priority(priority),
         )
 
         if success:
-            pattern_desc = format_time_pattern_description(TimePattern(**time_pattern))
+            pattern_desc = TimePatternUtils(
+                TimePattern(**time_pattern),
+            ).generate_description()
             return f"✅ Context '{name}' successfully added.\nPattern: {pattern_desc}"
         return f"❌ Error: A context with ID '{context_id}' already exists"
 
@@ -124,9 +115,7 @@ class Controller:
 
         for context in contexts:
             status = "🟢 Active" if context.active else "🔴 Inactive"
-            pattern_desc = format_time_pattern_description(
-                context.time_pattern,
-            )
+            pattern_desc = TimePatternUtils(context.time_pattern).generate_description()
             last_used = (
                 context.last_used.strftime("%Y-%m-%d %H:%M")
                 if context.last_used
@@ -161,7 +150,7 @@ class Controller:
             context_type=context_type,
             time_pattern=time_pattern,
             context_data=context_data,
-            priority=priority,
+            priority=Priority(priority),
         )
 
         if success:
