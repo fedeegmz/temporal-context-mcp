@@ -1,3 +1,3 @@
-from temporal_context_mcp.core.settings import settings
+from temporal_context_mcp.core.settings import Settings, settings
 
-__all__ = ["settings"]
+__all__ = ["Settings", "settings"]
