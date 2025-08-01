@@ -4,7 +4,6 @@ from temporal_context_mcp.context_management import (
     DeleteTemporalContext,
     FindTemporalContext,
     RecommendationRepository,
-    RecommendationRepositoryImpl,
     SaveTemporalContext,
     TemporalContextRepository,
     TemporalContextRepositoryImpl,
@@ -22,9 +21,7 @@ class Controller:
         self.__ctx_repository: TemporalContextRepository = (
             TemporalContextRepositoryImpl()
         )
-        self.__recommendation_repository: RecommendationRepository = (
-            RecommendationRepositoryImpl()
-        )
+        self.__recommendation_repository = RecommendationRepository()
         self.save_temporal_context = SaveTemporalContext(self.__ctx_repository)
         self.find_temporal_context = FindTemporalContext(self.__ctx_repository)
         self.delete_temporal_context = DeleteTemporalContext(self.__ctx_repository)
@@ -35,9 +32,12 @@ class Controller:
         )
 
         active_contexts = self.find_temporal_context.execute(actives=True)
-        recommendations = self.__recommendation_repository.get_context_recommendations(
-            active_contexts,
-        )
+        sorted_contexts = sorted(active_contexts, key=lambda x: x.priority)
+        recommendation: dict[str, str] | None = None
+        if len(sorted_contexts) > 0:
+            recommendation = self.__recommendation_repository.find_by_context_type(
+                sorted_contexts[0].context_type,
+            )
 
         for context in active_contexts:
             self.__ctx_repository.mark_one_as_used(context.id)
@@ -57,20 +57,20 @@ class Controller:
 
         result_text += f"""
         **Recommendations:**
-        • Response style: {recommendations["response_style"]}
-        • Formality level: {recommendations["formality_level"]}
-        • Detail level: {recommendations["detail_level"]}
-        • Time sensitive: {recommendations["time_sensitive"]}
+        • Response style: {recommendation["response_style"]}
+        • Formality level: {recommendation["formality_level"]}
+        • Detail level: {recommendation["detail_level"]}
+        • Time sensitive: {recommendation["time_sensitive"]}
         """
 
-        if recommendations["suggested_tools"]:
+        if recommendation["suggested_tools"]:
             result_text += (
-                f"• Suggested tools: {', '.join(recommendations['suggested_tools'])}\n"
+                f"• Suggested tools: {', '.join(recommendation['suggested_tools'])}\n"
             )
 
-        if recommendations["avoid_topics"]:
+        if recommendation["avoid_topics"]:
             result_text += (
-                f"• Avoid topics: {', '.join(recommendations['avoid_topics'])}\n"
+                f"• Avoid topics: {', '.join(recommendation['avoid_topics'])}\n"
             )
 
         return result_text
