@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import override
 
-from temporal_context_mcp.context_management import (
+from temporal_context_mcp.context_management.domain import (
     TemporalContext,
     TemporalContextRepository,
 )

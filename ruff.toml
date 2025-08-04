@@ -74,7 +74,7 @@ unfixable = []
 "**/server.py" = ["E501", "PLR0913", "PLR0917"]
 "**/shared/application/time_pattern_utils.py" = ["PLR0911"]
 "**/shared/domain/utils/decorators.py" = ["ANN001", "ANN002", "ANN003", "ANN201", "ANN202"]
-"**/context_management/infrastructure/controller.py" = ["PLR0913"]
+"**/context_management/infrastructure/controller.py" = ["PLR0913", "E501"]
 "**/context_management/application/save_temporal_context.py" = ["PLR0913"]
 
 [format]

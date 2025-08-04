@@ -1,11 +1,17 @@
 from typing import Any
 
-from temporal_context_mcp.context_management import (
+from temporal_context_mcp.context_management.application import (
     DeleteTemporalContext,
     FindTemporalContext,
-    RecommendationRepository,
     SaveTemporalContext,
+)
+from temporal_context_mcp.context_management.domain import (
     TemporalContextRepository,
+)
+from temporal_context_mcp.context_management.infrastructure.recommendation_repository import (
+    RecommendationRepository,
+)
+from temporal_context_mcp.context_management.infrastructure.temporal_context_repository_impl import (
     TemporalContextRepositoryImpl,
 )
 from temporal_context_mcp.shared import (
