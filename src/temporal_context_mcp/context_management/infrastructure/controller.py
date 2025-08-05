@@ -1,5 +1,3 @@
-from typing import Any
-
 from temporal_context_mcp.context_management.application import (
     DeleteTemporalContext,
     FindTemporalContext,
@@ -8,6 +6,12 @@ from temporal_context_mcp.context_management.application import (
 from temporal_context_mcp.context_management.domain import (
     TemporalContextRepository,
 )
+from temporal_context_mcp.context_management.infrastructure.dto.replace_temporal_context_dto import (
+    ReplaceTemporalContextDto,
+)
+from temporal_context_mcp.context_management.infrastructure.dto.save_temporal_context_dto import (
+    SaveTemporalContextDto,
+)
 from temporal_context_mcp.context_management.infrastructure.recommendation_repository import (
     RecommendationRepository,
 )
@@ -15,8 +19,6 @@ from temporal_context_mcp.context_management.infrastructure.temporal_context_rep
     TemporalContextRepositoryImpl,
 )
 from temporal_context_mcp.shared import (
-    Priority,
-    TimePattern,
     TimePatternUtils,
     get_current_datetime,
 )
@@ -81,31 +83,15 @@ class Controller:
 
         return result_text
 
-    def add_temporal_context(
-        self,
-        *,
-        context_id: str,
-        name: str,
-        context_type: str,
-        time_pattern: dict[str, Any],
-        context_data: dict[str, Any],
-        priority: int = 1,
-    ) -> str:
-        success = self.save_temporal_context.execute(
-            context_id=context_id,
-            name=name,
-            context_type=context_type,
-            time_pattern=time_pattern,
-            context_data=context_data,
-            priority=Priority(priority),
-        )
+    def add_temporal_context(self, *, data: SaveTemporalContextDto) -> str:
+        success = self.save_temporal_context.execute(dto=data)
 
         if success:
-            pattern_desc = TimePatternUtils(
-                TimePattern(**time_pattern),
-            ).generate_description()
-            return f"✅ Context '{name}' successfully added.\nPattern: {pattern_desc}"
-        return f"❌ Error: A context with ID '{context_id}' already exists"
+            pattern_desc = TimePatternUtils(data.time_pattern).generate_description()
+            return (
+                f"✅ Context '{data.name}' successfully added.\nPattern: {pattern_desc}"
+            )
+        return f"❌ Error: A context with ID '{data.id}' already exists"
 
     def list_contexts(
         self,
@@ -140,28 +126,13 @@ class Controller:
 
         return result_text
 
-    def replace_context(
+    def replace_context(  # noqa: PLR6301
         self,
         *,
-        context_id: str,
-        name: str,
-        context_type: str,
-        time_pattern: dict[str, Any],
-        context_data: dict[str, Any],
-        priority: int = 1,
+        context_id: str,  # noqa: ARG002
+        replacement: ReplaceTemporalContextDto,  # noqa: ARG002
     ) -> str:
-        success = self.save_temporal_context.execute(
-            context_id=context_id,
-            name=name,
-            context_type=context_type,
-            time_pattern=time_pattern,
-            context_data=context_data,
-            priority=Priority(priority),
-        )
-
-        if success:
-            return f"✅ Context '{context_id}' successfully updated."
-        return f"❌ Error: Context '{context_id}' not found"
+        raise Exception("Not Implemented")
 
     def delete_context(self, *, context_id: str) -> str:
         success = self.delete_temporal_context.execute(context_id=context_id)
