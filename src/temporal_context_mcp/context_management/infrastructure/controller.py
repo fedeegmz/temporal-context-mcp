@@ -6,12 +6,6 @@ from temporal_context_mcp.context_management.application import (
 from temporal_context_mcp.context_management.domain import (
     TemporalContextRepository,
 )
-from temporal_context_mcp.context_management.infrastructure.dto.replace_temporal_context_dto import (
-    ReplaceTemporalContextDto,
-)
-from temporal_context_mcp.context_management.infrastructure.dto.save_temporal_context_dto import (
-    SaveTemporalContextDto,
-)
 from temporal_context_mcp.context_management.infrastructure.recommendation_repository import (
     RecommendationRepository,
 )
@@ -83,16 +77,6 @@ class Controller:
 
         return result_text
 
-    def add_temporal_context(self, *, data: SaveTemporalContextDto) -> str:
-        success = self.save_temporal_context.execute(dto=data)
-
-        if success:
-            pattern_desc = TimePatternUtils(data.time_pattern).generate_description()
-            return (
-                f"✅ Context '{data.name}' successfully added.\nPattern: {pattern_desc}"
-            )
-        return f"❌ Error: A context with ID '{data.id}' already exists"
-
     def list_contexts(
         self,
         *,
@@ -125,18 +109,3 @@ class Controller:
         """
 
         return result_text
-
-    def replace_context(  # noqa: PLR6301
-        self,
-        *,
-        context_id: str,  # noqa: ARG002
-        replacement: ReplaceTemporalContextDto,  # noqa: ARG002
-    ) -> str:
-        raise Exception("Not Implemented")
-
-    def delete_context(self, *, context_id: str) -> str:
-        success = self.delete_temporal_context.execute(context_id=context_id)
-
-        if success:
-            return f"✅ Context ({context_id}) successfully deleted."
-        return f"❌ Error deleting context '{context_id}'"

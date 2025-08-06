@@ -1,9 +1,9 @@
+from temporal_context_mcp.context_management.application.dto import (
+    SaveTemporalContextDto,
+)
 from temporal_context_mcp.context_management.domain import (
     TemporalContext,
     TemporalContextRepository,
-)
-from temporal_context_mcp.context_management.infrastructure.dto import (
-    SaveTemporalContextDto,
 )
 from temporal_context_mcp.shared import (
     Priority,

@@ -1,5 +1,5 @@
 from temporal_context_mcp.context_management.application import SaveTemporalContext
-from temporal_context_mcp.context_management.infrastructure.dto import (
+from temporal_context_mcp.context_management.application.dto import (
     SaveTemporalContextDto,
 )
 from temporal_context_mcp.shared import ContextType, TimePattern
