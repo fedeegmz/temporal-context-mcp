@@ -2,9 +2,11 @@ from temporal_context_mcp.context_management import (
     RecommendationRepository,
     TemporalContextRepository,
 )
-from temporal_context_mcp.context_management.application import FindTemporalContext
 from temporal_context_mcp.context_management.application.dto import (
     TemporalContextResultDto,
+)
+from temporal_context_mcp.context_management.application.find_temporal_context import (
+    FindTemporalContext,
 )
 
 
