@@ -1,5 +1,3 @@
-from typing import Any
-
 from pydantic import BaseModel, Field
 
 from temporal_context_mcp.shared import ContextType, TimePattern
@@ -13,8 +11,4 @@ class SaveTemporalContextDto(BaseModel):
         description="Temporal context type",
     )
     time_pattern: TimePattern = Field(..., description="Temporal context time_pattern")
-    context_data: dict[str, Any] = Field(
-        default={},
-        description="Temporal context data",
-    )
     priority: int = Field(default=1, description="Priority")

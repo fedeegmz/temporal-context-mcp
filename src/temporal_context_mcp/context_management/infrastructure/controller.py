@@ -31,6 +31,7 @@ class Controller:
         self.__find_temporal_context = FindTemporalContext(self.__ctx_repository)
         self.__find_current_temporal_context = FindCurrentTemporalContext(
             temporal_context_repository=self.__ctx_repository,
+            recommendation_repository=self.__recommendation_repository,
             find_temporal_context=self.__find_temporal_context,
         )
 
@@ -64,7 +65,6 @@ class Controller:
         • Pattern: {pattern_desc}
         • Priority: {context.priority}
         • Last used: {last_used}
-        • Data: {len(context.context_data)} settings
 
         """
 

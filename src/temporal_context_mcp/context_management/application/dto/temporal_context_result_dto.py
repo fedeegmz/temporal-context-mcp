@@ -13,10 +13,6 @@ class TemporalContextResultDto(BaseModel):
         description="Temporal context type",
     )
     time_pattern: TimePattern = Field(..., description="Temporal context time_pattern")
-    context_data: dict[str, Any] = Field(
-        default={},
-        description="Temporal context data",
-    )
     priority: int = Field(default=1, description="Priority")
     recommendation: dict[str, Any] = Field(
         default={},

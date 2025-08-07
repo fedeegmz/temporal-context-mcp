@@ -127,18 +127,9 @@ class TemporalContextRepositoryImpl(TemporalContextRepository):
                 name="Work Schedule",
                 context_type=ContextType.WORK_SCHEDULE,
                 time_pattern=TimePattern(
-                    days_of_week=[1, 2, 3, 4, 5],  # Mon-Fri
-                    hour_range=(9, 17),  # 9AM-5PM
+                    days_of_week=[1, 2, 3, 4, 5],
+                    hour_range=(10, 19),
                 ),
-                context_data={
-                    "preferences": {
-                        "response_style": "professional",
-                        "formality_level": "high",
-                        "detail_level": "high",
-                    },
-                    "suggested_tools": ["calendar", "email", "tasks"],
-                    "avoid_topics": ["entertainment", "personal"],
-                },
                 created_at=datetime.now(),
             ),
             TemporalContext(
@@ -147,16 +138,8 @@ class TemporalContextRepositoryImpl(TemporalContextRepository):
                 context_type=ContextType.FOCUS_TIME,
                 time_pattern=TimePattern(
                     days_of_week=[1, 2, 3, 4, 5],
-                    hour_range=(8, 11),
+                    hour_range=(8, 10),
                 ),
-                context_data={
-                    "preferences": {
-                        "response_style": "concise",
-                        "detail_level": "medium",
-                    },
-                    "avoid_interruptions": True,
-                    "quick_responses_preferred": True,
-                },
                 created_at=datetime.now(),
             ),
             TemporalContext(
@@ -164,15 +147,6 @@ class TemporalContextRepositoryImpl(TemporalContextRepository):
                 name="Relaxed Weekend",
                 context_type=ContextType.RESPONSE_STYLE,
                 time_pattern=TimePattern(days_of_week=[0, 6]),  # Sat-Sun
-                context_data={
-                    "preferences": {
-                        "response_style": "casual",
-                        "formality_level": "low",
-                        "detail_level": "medium",
-                    },
-                    "encourage_creativity": True,
-                    "suggested_topics": ["hobbies", "entertainment", "learning"],
-                },
                 created_at=datetime.now(),
             ),
         ]
