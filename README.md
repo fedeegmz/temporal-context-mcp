@@ -1,410 +1,173 @@
-# 🕒 Temporal Context MCP Server
+# Temporal Context MCP
 
-An innovative MCP (Model Context Protocol) server that enables AI assistants to intelligently adapt based on the user's
-temporal context.
+A Model Context Protocol (MCP) server that provides intelligent temporal context, enabling AI agents to adapt their
+responses based on the user's schedule and routines.
 
-## 🌟 Key Features
+## How It Works
 
-- **Intelligent temporal contexts**: Define specific behaviors for different times of day, days of the week, or custom
-  patterns
-- **Multiple context types**: Work schedules, mood patterns, response styles, availability, and focus time
-- **Flexible patterns**: Support for fixed schedules, cron patterns, specific dates, and time ranges
-- **Automatic recommendations**: The system automatically suggests appropriate response styles, tools, and
-  configurations
-- **Persistent storage**: Contexts are saved locally in JSON format
+The system operates on a simple yet effective loop:
 
-## 📦 Installation
+1. **Context Definition**: The user defines a set of `TemporalContext` objects in a `contexts.json` file. Each context
+   represents a specific period or activity (e.g., work, study, exercise).
+2. **Time Pattern Matching**: Each `TemporalContext` is associated with a `TimePattern`, which is a `cron` expression (
+   e.g., `0 9 * * 1-5` for 9 AM on weekdays).
+3. **Active Context Resolution**: The server continuously evaluates the current time against all defined time patterns.
+   When a match is found, the corresponding `TemporalContext` becomes active. If multiple contexts match, a `priority`
+   field is used to resolve conflicts.
+4. **Recommendation Derivation**: The active context's `context_type` (e.g., `WORK`, `HOME`) is used to look up a
+   corresponding `Recommendation` object. This mapping is managed internally by the `RecommendationRepository`.
+5. **API Exposure**: The primary AI agent calls the `get_current_context()` endpoint, which returns the active
+   `TemporalContext` along with its derived `Recommendation`.
 
-### Prerequisites
+Persistence is handled by a simple JSON file, making the system transparent and easy to configure.
 
-- Python 3.11 or higher
-- UV (recommended) or pip
+## Key Components
 
-## 🚀 Basic Usage
+### `TemporalContext`
 
-### 1. Get current context
-
-```python
-# Through MCP
-await call_tool("get_current_context")
-```
-
-This will show you:
-
-- Active contexts at this moment
-- Response style recommendations
-- Suggested tools
-- Topics to avoid
-
-### 2. Create a custom context
+This is the core domain model, representing a specific, user-defined block of time.
 
 ```python
-await call_tool("add_temporal_context", {
-    "id": "monday_meetings",
-    "name": "Monday meetings",
-    "context_type": "work_schedule",
-    "time_pattern": {
-        "days_of_week": [1],  # Monday only
-        "hour_range": [14, 16]  # 2PM-4PM
-    },
-    "context_data": {
-        "preferences": {
-            "response_style": "professional",
-            "formality_level": "high",
-            "detail_level": "high"
-        },
-        "suggested_tools": ["calendar", "notes", "tasks"],
-        "avoid_topics": ["personal", "entertainment"]
-    },
-    "priority": 1
-})
+class TemporalContext(BaseModel):
+    id: str
+    name: str
+    context_type: ContextType  # Enum: WORK, HOME, STUDY, etc.
+    time_pattern: TimePattern  # A cron expression
+    active: bool = True
+    priority: Priority = Priority.LOW  # Enum: LOW, MEDIUM, HIGH
 ```
 
-### 3. List all contexts
+### `Recommendation`
+
+This object provides actionable guidance to the AI agent. It is not stored but is derived from the active
+`TemporalContext`.
 
 ```python
-await call_tool("list_contexts")
+class Recommendation(BaseModel):
+    context_type: ContextType
+    response_style: ResponseStyle  # e.g., NORMAL, CONCISE
+    formality_level: FormalityLevel  # e.g., INFORMAL, FORMAL
+    detail_level: DetailLevel  # e.g., LOW, MEDIUM, HIGH
+    suggested_tools: list[str]  # Tools to prefer
+    avoid_topics: list[str]  # Topics to avoid
 ```
 
-### 4. Preview future contexts
+## API
 
-```python
-await call_tool("preview_context", {
-    "datetime": "2024-12-25T09:00:00",
-    "timezone": "local"
-})
-```
+The server exposes its functionality via MCP tools.
 
-## 🔧 Context Types
+### `get_current_context()`
 
-### `work_schedule` - Work Schedule
+Returns the currently active temporal context and the associated recommendation. This is the primary endpoint for AI
+agents.
 
-- Activates professional mode during work hours
-- Suggests productivity tools
-- Avoids personal topics
-
-### `focus_time` - Focus Time
-
-- More concise responses
-- Avoids interruptions
-- Prioritizes efficiency
-
-### `mood_pattern` - Mood Patterns
-
-- Adapts tone based on your emotional state
-- Suggests appropriate activities
-- Customizes motivation level
-
-### `response_style` - Response Style
-
-- Defines formality and detail level
-- Adapts vocabulary and structure
-- Customizes based on situation
-
-### `availability` - Availability
-
-- Indicates when you're available/busy
-- Adjusts response urgency
-- Manages time expectations
-
-## 📅 Time Patterns
-
-### Days of the week
-
-```
-"days_of_week": [1, 2, 3, 4, 5]  # Mon-Fri (0=Sunday)
-```
-
-### Hour ranges
-
-```
-"hour_range": [9, 17]  # 9AM to 5PM
-```
-
-### Specific hours
-
-```
-"hours": [9, 13, 17]  # 9AM, 1PM, 5PM
-```
-
-### Cron patterns
-
-```
-"cron_pattern": "0 9 * * 1-5"  # 9AM, weekdays
-```
-
-### Specific dates
-
-```
-"specific_dates": ["2024-12-25", "2024-01-01"]  # Christmas and New Year
-```
-
-## 🔄 Useful Context Examples
-
-### Strict work hours
-
-```python
-{
-    "id": "strict_work",
-    "name": "Office hours",
-    "context_type": "work_schedule",
-    "time_pattern": {
-        "days_of_week": [1, 2, 3, 4, 5],
-        "hour_range": [9, 18]
-    },
-    "context_data": {
-        "preferences": {
-            "response_style": "professional",
-            "formality_level": "high",
-            "detail_level": "high"
-        },
-        "time_sensitive": True
-    }
-}
-```
-
-### Creative night mode
-
-```python
-{
-    "id": "creative_night",
-    "name": "Night creative sessions",
-    "context_type": "mood_pattern",
-    "time_pattern": {
-        "hour_range": [20, 23]
-    },
-    "context_data": {
-        "mood": "creative",
-        "preferences": {
-            "response_style": "inspiring",
-            "detail_level": "high"
-        },
-        "suggested_tools": ["brainstorm", "research", "writing"]
-    }
-}
-```
-
-### Relaxed weekend
-
-```python
-{
-    "id": "weekend_chill",
-    "name": "Weekend relaxation",
-    "context_type": "response_style",
-    "time_pattern": {
-        "days_of_week": [0, 6]
-    },
-    "context_data": {
-        "preferences": {
-            "response_style": "casual",
-            "formality_level": "low"
-        },
-        "encourage_fun": True
-    }
-}
-```
-
-## 🔧 Advanced Customization
-
-### Priorities
-
-Contexts have priorities (1=high, 3=low). When multiple contexts are active, higher priority ones take precedence.
-
-### Custom context data
-
-You can add any field to `context_data`:
-
-```python
-"context_data": {
-    "preferences": {...},
-    "custom_field": "custom value",
-    "user_mood": "motivated",
-    "project_context": "machine_learning"
-}
-```
-
-### Dynamic updates
-
-```python
-await call_tool("update_context", {
-    "context_id": "strict_work",
-    "updates": {
-        "active": False,
-        "context_data": {"new_preference": "value"}
-    }
-})
-```
-
-## 🗂️ File Structure
-
-```
-temporal-context-mcp/
-├── src/temporal_context_mcp/
-│   ├── __init__.py
-│   ├── server.py          # Main MCP server
-│   ├── temporal_store.py  # Persistent storage
-│   ├── time_utils.py      # Time utilities
-│   └── models.py          # Pydantic data models
-├── data/
-│   └── temporal_contexts.json  # Local storage
-├── pyproject.toml
-└── README.md
-```
-
-## 🤝 MCP Client Integration
-
-### Claude Desktop
-
-Add to `claude_desktop_config.json`:
+**Example Response:**
 
 ```json
 {
-  "mcpServers": {
-    "temporal-context": {
-      "command": "temporal-context-mcp"
-    }
+  "temporal_context": {
+    "id": "ctx_work_hours",
+    "name": "Work Hours",
+    "context_type": "WORK",
+    "time_pattern": {
+      "pattern": "0 9 * * 1-5"
+    },
+    "active": true,
+    "created_at": "2023-10-27T09:00:00Z",
+    "last_used": null,
+    "priority": "MEDIUM"
+  },
+  "recommendation": {
+    "context_type": "WORK",
+    "response_style": "NORMAL",
+    "formality_level": "FORMAL",
+    "detail_level": "HIGH",
+    "suggested_tools": [
+      "calendar",
+      "jira"
+    ],
+    "avoid_topics": [
+      "personal_finance"
+    ],
+    "time_sensitive": true
   }
 }
 ```
 
-### Other clients
+### `list_contexts()`
 
-The server implements the standard MCP protocol and is compatible with any MCP-supporting client.
+Lists all defined temporal contexts.
 
-## 📊 Use Cases
+- `context_type` (str, optional): Filter by context type.
+- `actives` (bool, optional): Filter by active/inactive status.
 
-1. **Adaptive productivity**: Automatically switch between work and personal modes
-2. **Energy management**: Gentler responses when you're tired
-3. **Project context**: Different configurations for different types of work
-4. **Daily routines**: Automate changes based on your personal routine
-5. **Remote work**: Clearly separate work and personal time
+## Installation and Setup
 
-## 🛠️ Development
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/fedeegmz/temporal-context-mcp.git
+   cd temporal-context-mcp
+   ```
 
-### Run in development mode
+2. **Install dependencies:**
+   ```bash
+   uv sync
+   ```
 
-```bash
-uv run python -m temporal_context_mcp.server
-```
+3. **Configure Contexts:**
+   Create a `contexts.json` file in the `data` directory. This file should contain an array of `TemporalContext`objects.
 
-### Tests (to be implemented)
+   **Example `data/contexts.json`:**
+   ```json
+   [
+     {
+       "id": "ctx_work_hours_1",
+       "name": "Work Hours",
+       "context_type": "WORK",
+       "time_pattern": {
+         "pattern": "0 9 * * 1-5"
+       },
+       "priority": "MEDIUM"
+     },
+     {
+       "id": "ctx_evening_leisure_1",
+       "name": "Evening Leisure",
+       "context_type": "LEISURE",
+       "time_pattern": {
+         "pattern": "0 19 * * *"
+       },
+       "priority": "LOW"
+     }
+   ]
+   ```
 
-```bash
-uv run pytest
-```
+4. **Run the server:**
+   The project is packaged with a console script.
+   ```bash
+   uv run temporal-context-mcp
+   ```
+   The server will start and listen for requests on stdio.
 
-### Contributing
+## Development
 
-1. Fork the project
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+To set up a development environment:
 
-## 📝 License
+1. Install in editable mode with development dependencies:
+   ```bash
+   uv sync --group dev
+   ```
 
-MIT License - see LICENSE file for details.
+2. Install pre-commit hooks:
+   ```bash
+   pre-commit install
+   ```
 
-## 🎯 Roadmap
+3. Run tests:
+   ```bash
+   uv run pytest
+   ```
 
-- [ ] Web interface for visual management
-- [ ] External calendar synchronization
-- [ ] Machine learning for context prediction
-- [ ] Integration with productivity services
-- [ ] Geographic contexts (location-based)
-- [ ] Collaborative contexts (team work)
-
-## 🚀 Available Tools
-
-### `get_current_context`
-
-Get the current temporal context and recommendations.
-
-**Parameters:**
-
-- `timezone` (optional): Timezone (default: "local")
-
-### `add_temporal_context`
-
-Add a new temporal context.
-
-**Required parameters:**
-
-- `id`: Unique context ID
-- `name`: Descriptive name
-- `context_type`: Type of context (work_schedule, mood_pattern, etc.)
-- `time_pattern`: Time pattern definition
-- `context_data`: Context data and preferences
-
-**Optional parameters:**
-
-- `priority`: Priority level (1-3, default: 1)
-
-### `list_contexts`
-
-List all temporal contexts.
-
-**Parameters:**
-
-- `context_type` (optional): Filter by context type
-- `active_only` (optional): Show only currently active contexts
-
-### `update_context`
-
-Update an existing temporal context.
-
-**Parameters:**
-
-- `context_id`: ID of context to update
-- `updates`: Fields to update
-
-### `delete_context`
-
-Delete a temporal context.
-
-**Parameters:**
-
-- `context_id`: ID of context to delete
-
-### `preview_context`
-
-Preview which contexts would be active at a specific time.
-
-**Parameters:**
-
-- `datetime` (optional): Target datetime in ISO format
-- `timezone` (optional): Timezone (default: "local")
-
-## 💡 Pro Tips
-
-1. **Start simple**: Begin with basic work/personal contexts, then add complexity
-2. **Use priorities**: Set important contexts (like focus time) to priority 1
-3. **Test patterns**: Use `preview_context` to verify your time patterns work correctly
-4. **Layer contexts**: Multiple contexts can be active simultaneously
-5. **Monitor usage**: Check `last_used` timestamps to see which contexts are most valuable
-
-## 🤖 Example Integration
-
-Here's how the assistant might use this information:
-
-```
-User: "Help me write an email"
-
-Context Active: 
-- Work Schedule (Mon-Fri 9-5)
-- Focus Time (9-11 AM)
-
-AI Response: "I'll help you draft a professional email. Since you're in focus time, I'll keep this efficient and to the point. What's the purpose of this email?"
-```
-
-vs.
-
-```
-User: "Help me write an email"
-
-Context Active:
-- Weekend Casual
-- Creative Mode
-
-AI Response: "Sure! Let's craft something great. Is this a fun personal email or something more creative? I can help make it engaging and expressive."
-```
+4. Run web inspector:
+   ```bash
+   mcp-inspector uv run temporal-context-mcp
+   ```
